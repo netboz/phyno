@@ -10,7 +10,7 @@ Phyno (for Physic Node) is a physic simulation engine over MQTT.
 - Create Entities by publishing to : ```/phyno/scenes/<scene_name>/entities/<entity_name>```
 
 
-- Read position in real time at : ```/phyno/scenes/<scene_name>/entities/<entity_name>/x```
+- Read position in real time at : ```/phyno/scenes/<scene_name>/entities/<entity_name>/x```, ```/phyno/scenes/<scene_name>/entities/<entity_name>/y``` etc ...
 
 ## Features
 
