@@ -1,11 +1,19 @@
 cmake_minimum_required(VERSION 3.10)
 include(CheckCXXCompilerFlag)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
+
+message("Generated with config types: ${CMAKE_CONFIGURATION_TYPES}")
+
 # set the project name
 project(Phyno VERSION 0.1)
 
 #This is where you can set flags such as -Wall -pedantic etc...
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+
+# Add build directory to include path
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
 
 #A function created to perform the same as in set(CMAKE_CXX...
 function(enable_cxx_compiler_flag_if_supported flag)
@@ -59,7 +67,9 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Poco)
 
-find_package(TBB REQUIRED)
+#include(cmake_TBBGet.cmake)
+#tbb_get(TBB_ROOT tbb_root CONFIG_DIR TBB_DIR)
+find_package(TBB )
 
 # find physx libraries
 find_library(PHYSX_COMMON NAMES libPhysXCommon_static_64.a HINTS "${CMAKE_SOURCE_DIR}/libs/PhysX/bin/linux.clang/debug" REQUIRED)

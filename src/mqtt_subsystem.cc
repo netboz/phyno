@@ -46,7 +46,7 @@ void onDisconnect(void* context, MQTTAsync_successData* response)
 {
     mqtt_subsystem *sub = (mqtt_subsystem *)context;
 
-    sub->self_app->logger().information("Successful disconnection");
+    sub->self_app->logger().information("Successful disconnection.");
     sub->connected = false;
 }
 void onSubscribe(void* context, MQTTAsync_successData* response)
@@ -76,9 +76,8 @@ static void onConnect(void* context, MQTTAsync_successData* response)
     sub->connected = true;
     MQTTAsync client = sub->client;
     MQTTAsync_responseOptions opts = MQTTAsync_responseOptions_initializer;
-    MQTTAsync_message pubmsg = MQTTAsync_message_initializer;
     sub->self_app->logger().information("Successful connection");
-    
+
     if (sub->clean_session)
     {
         int rc;
@@ -87,40 +86,38 @@ static void onConnect(void* context, MQTTAsync_successData* response)
         std::string topic = ss.str();
         opts.onSuccess = onSubscribe;
         opts.onFailure = onSubscribeFailure;
+        opts.subscribeOptions.noLocal = 1;
         opts.context = context;
         deliveredtoken = 0;
         if ((rc = MQTTAsync_subscribe(client, topic.c_str(), QOS, &opts)) != MQTTASYNC_SUCCESS)
         {
             sub->self_app->logger().error("Failed to start subscribe, return code %d", rc);
         }
-       
     }
+    sub->self_app->logger().information("Initialized MQTT-Subsystem");
 
 }
 
-
-
-mqtt_subsystem::mqtt_subsystem(void)
+mqtt_subsystem::mqtt_subsystem(void):mqttPrefix(DEFAULT_PHYNO_ROOT_TOPIC) 
 {
 }
+
 mqtt_subsystem::~mqtt_subsystem(void)
 {
+    // Free mqtt messages processing pipeline ( in case it un initialize wasn't called)
+    if (processor) delete(processor);
 }
-
 
 void mqtt_subsystem::initialize(Poco::Util::Application &app)
 {
     self_app = &app;
     app.logger().information("Initializing MQTT-Subsystem");
 
-
-    this->processor = new mqttPreProcessor(DEFAULT_PHYNO_ROOT_TOPIC);
+    this->processor = new mqttPreProcessor(mqttPrefix);
     //Read configuration values
     std::string broker_url = app.config().getString("phyno.broker.url", DEFAULT_ADDRESS);
 
-
     int rc;
-    int ch;
     MQTTAsync_create(&client, broker_url.data(), CLIENTID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
     MQTTAsync_setCallbacks(client, this, connlost, msgarrvd, NULL);
     conn_opts.keepAliveInterval = 20;
@@ -128,28 +125,26 @@ void mqtt_subsystem::initialize(Poco::Util::Application &app)
     conn_opts.onSuccess = onConnect;
     conn_opts.onFailure = onConnectFailure;
     conn_opts.context = this;
+    
+    app.logger().information("Connecting to broker ...");
+    
     if ((rc = MQTTAsync_connect(client, &conn_opts)) != MQTTASYNC_SUCCESS)
     {
         app.logger().error("Failed to start connect, return code %d", rc);
         //  exit(EXIT_FAILURE);
     }
-
-    app.logger().information("Connecting to broker ...");
-
-
 }
 
 void mqtt_subsystem::reinitialize(Poco::Util::Application &app)
 {
-    //mqtt_subsystem::uninitialize();
-    //mqtt_subsystem::initialize();
+    app.logger().information("Re-initializing MQTT-Subsystem");
+    uninitialize();
+    initialize(app);
 }
 
 void mqtt_subsystem::uninitialize()
 {
-    int disc_finished = 0;
     int rc;
-    int ch;
     self_app->logger().information("UN-Initializing MQTT-Subsystem");
     MQTTAsync_disconnectOptions disc_opts = MQTTAsync_disconnectOptions_initializer;
     //disc_opts.onSuccess = onDisconnect;
@@ -157,10 +152,13 @@ void mqtt_subsystem::uninitialize()
     {
         self_app->logger().error("Failed to start disconnect, return code %d", rc);
     }
-    //while   (!disc_finished)
-    //    usleep(100);
+    
+    // Delete mqtt message processing pipeline
+    if (processor) delete(processor);
 
     MQTTAsync_destroy(&client);
+    self_app->logger().information("UN-Initialized MQTT-Subsystem");
+
 }
 
 void mqtt_subsystem::defineOptions(Poco::Util::OptionSet& options)
