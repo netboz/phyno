@@ -14,7 +14,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 # Add build directory to include path
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-
 #A function created to perform the same as in set(CMAKE_CXX...
 function(enable_cxx_compiler_flag_if_supported flag)
     string(FIND "${CMAKE_CXX_FLAGS}" "${flag}" flag_already_set)
@@ -26,6 +25,10 @@ function(enable_cxx_compiler_flag_if_supported flag)
    unset(flag_supported CACHE)
   endif()
 endfunction()
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(Mosquitto REQUIRED IMPORTED_TARGET libmosquitto)
+
 
 enable_cxx_compiler_flag_if_supported("-Wall")
 enable_cxx_compiler_flag_if_supported("-Wextra")
@@ -41,18 +44,6 @@ enable_cxx_compiler_flag_if_supported("-O2")
 enable_cxx_compiler_flag_if_supported("D_NDEBUG")
 
 find_package(OpenSSL REQUIRED)
-find_library(paho-mqttpp3 NAMES libpaho-mqttpp3.a REQUIRED)
-find_library(paho-mqtt3a NAMES libpaho-mqtt3a.so REQUIRED)
-find_library(paho-mqtt3c NAMES libpaho-mqtt3c.so REQUIRED)
-
-add_library(pahottpp3 STATIC IMPORTED)
-set_target_properties(pahottpp3 PROPERTIES IMPORTED_LOCATION ${paho-mqttpp3})
-
-add_library(pahomqtt3a SHARED IMPORTED)
-set_property(TARGET pahomqtt3a PROPERTY IMPORTED_LOCATION ${paho-mqtt3a})
-
-add_library(pahomqtt3c SHARED IMPORTED)
-set_property(TARGET pahomqtt3c PROPERTY IMPORTED_LOCATION ${paho-mqtt3c})
 
 # Find all source files with file extension .c/.cpp inside src folder
 file(GLOB_RECURSE SOURCES "src/*.cc" "src/*.cpp")
@@ -89,9 +80,7 @@ add_executable(phyno ${SOURCES})
 target_link_libraries(phyno
   PUBLIC Poco::Foundation 
   PUBLIC Poco::Util 
-  pahottpp3 
-  pahomqtt3c 
-  pahomqtt3a
+  PkgConfig::Mosquitto
   ${PHYSX}
   ${PHYSX_PVSDK}
   ${PHYSX_EXTENSIONS}

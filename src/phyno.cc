@@ -8,15 +8,14 @@
 #include "Poco/ConsoleChannel.h"
 #include "Poco/AutoPtr.h"
 
-#include "mqtt_subsystem.h"
-#include "physx_subsystem.h"
+#include "phynoMqttSubsystem.h"
+#include "phynoPhysxSubsystem.h"
 
 using Poco::Logger;
 using Poco::AsyncChannel;
 using Poco::ConsoleChannel;
 using Poco::AutoPtr;
 using Poco::Util::IniFileConfiguration;
-
 
 class phyno: public Poco::Util::ServerApplication
 {
@@ -47,7 +46,7 @@ protected:
 
    }
 
-   int main(const std::vector<std::string>& args)
+   int main(const std::vector<std::string>& /*args*/)
    {
       waitForTerminationRequest();
       return Application::EXIT_OK;

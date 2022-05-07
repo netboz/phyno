@@ -1,5 +1,4 @@
-#include "physx_subsystem.h"
-#include "phynoEvent.h"
+#include "phynoPhysxSubsystem.h"
 #include "phynoScene.h"
 
 #include <iostream>
@@ -25,7 +24,7 @@ std::map<std::string, PxScene *> Scenes;
 
 runningPhysXScenesType runningScenes;
 
-void callbackTimerClass::onTimer(Poco::Timer &timer)
+void callbackTimerClass::onTimer(Poco::Timer & /*timer*/)
 {
     runningPhysXScenesType::range_type r = runningScenes.range();
     // Request each running scene to simulate a step
@@ -45,6 +44,7 @@ void callbackTimerClass::onTimer(Poco::Timer &timer)
 physx_subsystem::physx_subsystem(void)
 {
 }
+
 physx_subsystem::~physx_subsystem(void)
 {
 }
@@ -74,8 +74,9 @@ void physx_subsystem::initialize(Poco::Util::Application &app)
 
 void physx_subsystem::reinitialize(Poco::Util::Application &app)
 {
-    // mqtt_subsystem::uninitialize();
-    // mqtt_subsystem::initialize();
+    app.logger().information("Re-initializing MQTT-Subsystem");
+    uninitialize();
+    initialize(app);
 }
 
 void physx_subsystem::uninitialize()
@@ -101,7 +102,7 @@ const char *physx_subsystem::name() const
     return "PHYSX-Subsystem";
 }
 
-void physx_subsystem::submitTask(PxBaseTask &task)
+void physx_subsystem::submitTask(PxBaseTask &/*task*/)
 {
 }
 
@@ -113,9 +114,9 @@ uint32_t physx_subsystem::getWorkerCount() const
 void physx_subsystem::runSimulations()
 {
     Poco::Logger *logger = &Logger::get("PhynoMainLogger");
-	logger->information("Starting simulation");
+    logger->information("Starting simulation");
     TimerCallback<callbackTimerClass> callback(callbackTimer, &callbackTimerClass::onTimer);
-    timer = new Timer(1, 500);
+    timer = new Timer(1, 16);
     simulationsRunning = true;
     timer->start(callback);
 }

@@ -10,15 +10,12 @@ extern PxPhysics *gPhysics;
 extern PxDefaultCpuDispatcher *gDispatcher;
 extern PxMaterial *gMaterial;
 
-
 extern runningPhysXScenesType runningScenes;
 
 std::string getParamsKey(std::map<std::string, std::string> &params, std::string key)
 {
 	try
 	{
-		Poco::Logger *logger = &Logger::get("PhynoMainLogger");
-		logger->error("Size : %?d", params.size());
 		return (params.at(key));
 	}
 	// catch (std::exception e) // copy-initialization from the std::exception base
@@ -35,8 +32,6 @@ std::string getParamsKey(std::map<std::string, std::string> &params, std::string
 
 phynoEvent *taskPhynoRootMsg(mqttEvent *e)
 {
-	Poco::Logger *logger = &Logger::get("PhynoMainLogger");
-	logger->information("Task phyno root message");
 	delete (e);
 	return new (phynoEvent);
 }

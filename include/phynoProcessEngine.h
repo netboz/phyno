@@ -11,9 +11,9 @@
 
 #include <tuple>
 
-#include "physx_subsystem.h"
-#include "phynoEvent.h"
-#include "mqttEvent.h"
+#include "phynoPhysxSubsystem.h"
+#include "phynoPhysicsEvent.h"
+#include "phynoMqttEvent.h"
 
 using Poco::Logger;
 using Poco::StringTokenizer;

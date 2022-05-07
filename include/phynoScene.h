@@ -3,7 +3,8 @@
 #include "PxPhysicsAPI.h"
 
 #include "phynoProcessEngine.h"
-#include "phynoEvent.h"
+#include "phynoMqttEvent.h"
+
 #include <stdint.h>
 
 #include <tbb/tbb.h>
@@ -33,16 +34,13 @@ public:
                                                                  typedef oneapi::tbb::concurrent_queue<phynoEvent *>::const_iterator iter;
                                                                  for (iter i(this->sceneEventQueue.unsafe_begin()); i != this->sceneEventQueue.unsafe_end(); ++i)
                                                                  {
-                                                                     Poco::Logger *logger = &Logger::get("PhynoMainLogger");
-                                                                     logger->information("Processing queue");
+                                                                    
                                                                  }
                                                                  return (oneapi::tbb::flow::continue_msg());
                                                              });
         SimulationStage = new phynoPhysxPipelineStage_t(graph, oneapi::tbb::flow::serial,
                                                         [this](oneapi::tbb::flow::continue_msg) -> oneapi::tbb::flow::continue_msg
                                                         {
-                                                            Poco::Logger *logger = &Logger::get("PhynoMainLogger");
-                                                            logger->information("Simulating");
                                                             this->parentScene->simulate(1.0f / 60.0f);
                                                             return (oneapi::tbb::flow::continue_msg());
                                                         });
@@ -50,8 +48,6 @@ public:
         renderingStage = new phynoPhysxPipelineStage_t(graph, oneapi::tbb::flow::serial,
                                                        [this](oneapi::tbb::flow::continue_msg) -> oneapi::tbb::flow::continue_msg
                                                        {
-                                                           Poco::Logger *logger = &Logger::get("PhynoMainLogger");
-                                                           logger->information("Fetching resuts");
                                                            this->parentScene->fetchResults();
                                                            return (oneapi::tbb::flow::continue_msg());
                                                        });
