@@ -10,6 +10,7 @@
 #include "Poco/Logger.h"
 
 #include <tuple>
+#include <memory>
 
 #include "phynoPhysxSubsystem.h"
 #include "phynoPhysicsEvent.h"
@@ -72,7 +73,7 @@ static Graph graph(edges, graphSize);
 typedef std::tuple<mqttEvent *> mqttEventTaskSelectorTupleIn_t;
 typedef std::tuple<mqttEvent *, mqttEvent *, mqttEvent *, mqttEvent *, mqttEvent *> mqttEventTaskSelectorTupleOut_t;
 
-typedef oneapi::tbb::flow::function_node<mqttEvent *, phynoEvent *> taskMqttEventFunctionNode_t;
+typedef oneapi::tbb::flow::function_node<mqttEvent *> taskMqttEventFunctionNode_t;
 typedef oneapi::tbb::flow::multifunction_node<mqttEventTaskSelectorTupleIn_t,
 											  mqttEventTaskSelectorTupleOut_t, oneapi::tbb::flow::lightweight>
 	taskMqttEventMultiFunctionNode_t;
@@ -198,7 +199,7 @@ public:
 
 	std::string phynoPrefix;
 
-	std::vector<taskMqttEventFunctionNode_t *> vectorTasks;
+	std::vector<std::unique_ptr<taskMqttEventFunctionNode_t> > vectorTasks;
 
 	// preprocessingMqttEventTask_t createSceneTask;
 	void processMqttEvent(mqttEvent *mqttEvent);

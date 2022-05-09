@@ -9,12 +9,17 @@ void phynoScene::run()
 
 void phynoScene::step(uint16_t /*stepSize*/)
 {
-    Poco::Logger *logger = &Logger::get("PhynoMainLogger");
-    logger->information("Stepping");
     eventProcessingStage->try_put(oneapi::tbb::flow::continue_msg());
 }
 
 void phynoScene::stop()
 {
     running = false;
+}
+
+phynoScene::~phynoScene()
+{
+    delete (eventProcessingStage);
+    delete (SimulationStage);
+    delete (renderingStage);
 }

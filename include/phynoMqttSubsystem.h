@@ -4,7 +4,7 @@
 #include "Poco/Util/Subsystem.h"
 #include "Poco/Logger.h"
 
-#include "mosquitto.h"
+#include <mosquitto.h>
 
 #include "phynoProcessEngine.h"
 
@@ -24,7 +24,12 @@ public:
 
 	void send(std::string topic, const char *payload, uint32_t length)
 	{
-		mosquitto_publish_v5(this->mosq, NULL, (mqttPrefix + topic).c_str(), length, payload, QOS, true, NULL);
+		mosquitto_publish_v5(this->mosq, NULL, (mqttPrefix + topic).c_str(), length, payload, QOS, false, NULL);
+	}
+
+	void send(std::string topic, const char *payload, uint32_t length, bool retain)
+	{
+		mosquitto_publish_v5(this->mosq, NULL, (mqttPrefix + topic).c_str(), length, payload, QOS, retain, NULL);
 	}
 	// Pointer to the application this subsystem belongs to
 	Poco::Util::Application *self_app;

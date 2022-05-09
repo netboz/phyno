@@ -47,16 +47,17 @@ physx_subsystem::physx_subsystem(void)
 
 physx_subsystem::~physx_subsystem(void)
 {
+    delete(timer);
 }
 
 void physx_subsystem::initialize(Poco::Util::Application &app)
 {
     self_app = &app;
-    app.logger().information("Initializing Physx-Subsystem");
+    app.logger().information("PHYSICS_SUBSYSTEM: Initializing Physx-Subsystem");
     gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
 
     if (!gFoundation)
-        app.logger().error("Error initializing PhysX foundations.");
+        app.logger().error("PHYSICS_SUBSYSTEM: Error initializing PhysX foundations.");
 
     gPvd = PxCreatePvd(*gFoundation);
     PxPvdTransport *transport = PxDefaultPvdSocketTransportCreate(PVD_HOST, 5425, 10);
@@ -66,7 +67,7 @@ void physx_subsystem::initialize(Poco::Util::Application &app)
     gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
 
     if (!gPhysics)
-        app.logger().error("Error initializing PhysX engine.");
+        app.logger().error("PHYSICS_SUBSYSTEM: Error initializing PhysX engine.");
     // Initialize physx task dispatcher so it uses calling api thread
     gDispatcher = PxDefaultCpuDispatcherCreate(0);
     runSimulations();
@@ -74,18 +75,17 @@ void physx_subsystem::initialize(Poco::Util::Application &app)
 
 void physx_subsystem::reinitialize(Poco::Util::Application &app)
 {
-    app.logger().information("Re-initializing MQTT-Subsystem");
+    app.logger().information("PHYSICS_SUBSYSTEM: Re-initializing MQTT-Subsystem");
     uninitialize();
     initialize(app);
 }
 
 void physx_subsystem::uninitialize()
 {
-    self_app->logger().information("UN-Initializing MQTT-Subsystem");
-    gMaterial->release();
+    self_app->logger().information("PHYSICS_SUBSYSTEM: UN-Initializing Physics-Subsystem");
     gPhysics->release();
-    gFoundation->release();
     gDispatcher->release();
+   
 }
 
 void physx_subsystem::defineOptions(Poco::Util::OptionSet &options)
@@ -114,7 +114,7 @@ uint32_t physx_subsystem::getWorkerCount() const
 void physx_subsystem::runSimulations()
 {
     Poco::Logger *logger = &Logger::get("PhynoMainLogger");
-    logger->information("Starting simulation");
+    logger->information("PHYSICS_SUBSYSTEM: Starting simulation");
     TimerCallback<callbackTimerClass> callback(callbackTimer, &callbackTimerClass::onTimer);
     timer = new Timer(1, 16);
     simulationsRunning = true;

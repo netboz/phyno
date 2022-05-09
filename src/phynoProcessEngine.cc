@@ -4,6 +4,10 @@
 
 #include "Poco/LogStream.h"
 #include <Poco/JSON/JSON.h>
+#include "tbb/task.h"  
+
+#include "tbb/task_scheduler_observer.h"  
+
 
 extern std::map<std::string, physx::PxScene *> Scenes;
 extern PxPhysics *gPhysics;
@@ -18,75 +22,78 @@ std::string getParamsKey(std::map<std::string, std::string> &params, std::string
 	{
 		return (params.at(key));
 	}
-	// catch (std::exception e) // copy-initialization from the std::exception base
-	// {
-	//     std::cout << e.what(); // information from length_error is lost
-	// }
 	catch (const std::exception &e) // reference to the base of a polymorphic object
 	{
 		Poco::Logger *logger = &Logger::get("PhynoMainLogger");
-		logger->error("Key not found : %s   %s", key, e.what());
+		logger->error("MQTT_PROCESSOR: Key not found : %s   %s", key, e.what());
 		return (NULL);
 	}
 }
 
-phynoEvent *taskPhynoRootMsg(mqttEvent *e)
+void taskPhynoRootMsg(mqttEvent *e)
 {
 	delete (e);
-	return new (phynoEvent);
 }
 
-phynoEvent *taskCreateScene(mqttEvent *e)
+void taskCreateScene(mqttEvent *e)
 {
 	Poco::Logger *logger = &Logger::get("PhynoMainLogger");
-	logger->information("Task create scene : %?s", getParamsKey(e->paramParsed, "scene_name"));
+	logger->information("MQTT_PROCESSOR: Task create scene : %?s", getParamsKey(e->paramParsed, "scene_name"));
 	PxScene *mScene;
-	if (gPhysics == 0) {logger->error("NOPHYSICS"); return(NULL);}
+	if (gPhysics == 0)
+	{
+		logger->error("MQTT_PROCESSOR: Physx isn't initialised");
+		return;
+	}
 	PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
 	sceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
 	sceneDesc.cpuDispatcher = gDispatcher;
 	sceneDesc.filterShader = PxDefaultSimulationFilterShader;
-	logger->information("Screne created");
+	std::string sceneName = std::string(getParamsKey(e->paramParsed, "scene_name"));
+
+	logger->information("MQTT_PROCESSOR: created scene :%s", sceneName);
 	// e->paramParsed
 	mScene = gPhysics->createScene(sceneDesc);
-	phynoScene *pScene = new phynoScene(getParamsKey(e->paramParsed, "scene_name"), mScene);
+
+	phynoScene *pScene = new phynoScene(sceneName, mScene);
 	mScene->userData = pScene;
 	mScene->setSimulationEventCallback(new ephysx_simulation_callbacks());
 
-	Scenes.insert(std::pair<std::string, physx::PxScene *>(getParamsKey(e->paramParsed, "scene_name"), mScene));
+	Scenes.insert(std::pair<std::string, physx::PxScene *>(sceneName, mScene));
 	runningPhysXScenesType::accessor ac;
-	 runningScenes.insert( ac, std::pair<std::string, PxScene*>(getParamsKey(e->paramParsed, "scene_name"), mScene) );
+	runningScenes.insert(ac, std::pair<std::string, PxScene *>(sceneName, mScene));
 	delete (e);
-	return (new phynoEventCreateScene(getParamsKey(e->paramParsed, "scene_name")));
 }
 
 PxRigidDynamic *createDynamic(const PxTransform &t, const PxGeometry &geometry, const PxVec3 &velocity = PxVec3(0))
 {
 	PxRigidDynamic *dynamic = PxCreateDynamic(*gPhysics, t, geometry, *gMaterial, 10.0f);
-	dynamic->setRigidBodyFlags( PxRigidBodyFlag::eENABLE_POSE_INTEGRATION_PREVIEW );
+	dynamic->setRigidBodyFlags(PxRigidBodyFlag::eENABLE_POSE_INTEGRATION_PREVIEW);
 	dynamic->setAngularDamping(0.5f);
 	dynamic->setLinearVelocity(velocity);
 	return dynamic;
 }
 
-phynoEvent *taskCreateEntity(mqttEvent *e)
+void taskCreateEntity(mqttEvent *e)
 {
 	Poco::Logger *logger = &Logger::get("PhynoMainLogger");
-	logger->information("Task create Entity : scene : %?s   Entity: %?s", getParamsKey(e->paramParsed, "scene_name"), getParamsKey(e->paramParsed, "entity_name"));
-	PxScene *mScene = Scenes[getParamsKey(e->paramParsed, "scene_name")];
+	std::string scene_name = getParamsKey(e->paramParsed, "scene_name");
+	std::string entity_name = getParamsKey(e->paramParsed, "entity_name");
+	logger->information("MQTT_PROCESSOR: Task create Entity : scene : %?s   Entity: %?s", scene_name, entity_name);
+	PxScene *mScene = Scenes[scene_name];
 
 	if (mScene == NULL)
 	{
-		logger->error("Scene : %?s not found while adding rigid dynamic body: %?s", getParamsKey(e->paramParsed, "scene_name"), getParamsKey(e->paramParsed, "entity_name"));
-		return (NULL);
+		logger->error("MQTT_PROCESSOR: Scene : %?s not found while adding rigid dynamic body: %?s", scene_name, entity_name);
+		return;
 	}
-	phynoEventAddDynamicRigid *phynoEvent = new phynoEventAddDynamicRigid(getParamsKey(e->paramParsed, "scene_name"),  getParamsKey(e->paramParsed, "entity_name"));
+	phynoEventAddDynamicRigid *phynoEvent = new phynoEventAddDynamicRigid(scene_name, entity_name);
 
 	phynoEvent->rigidDynamics = createDynamic(PxTransform(PxVec3(0, 100, 0)), PxSphereGeometry(10), PxVec3(0, 0, 0));
-	phynoEvent->rigidDynamics->userData = new std::string(getParamsKey(e->paramParsed, "entity_name"));
-	mScene->addActor(*phynoEvent->rigidDynamics );
+	phynoEvent->rigidDynamics->userData = new std::string(entity_name);
+	phynoEvent->targetScene=mScene;
+	((phynoScene *)(mScene->userData))->sceneEventQueue.push(phynoEvent);
 	delete (e);
-	return (phynoEvent);
 }
 
 mqttPreProcessor::mqttPreProcessor(const std::string &str) : phynoPrefix(str)
@@ -94,24 +101,29 @@ mqttPreProcessor::mqttPreProcessor(const std::string &str) : phynoPrefix(str)
 	logger = &Logger::get("PhynoMainLogger");
 	// Initialize multifunction node which is graph entry node
 	mqttEventTaskSelector = new taskMqttEventMultiFunctionNode_t(graph, oneapi::tbb::flow::unlimited, mqttEventTaskSelectorBody(str));
-
+	 int nDefThreads = oneapi::tbb::info::default_concurrency();
+	 int max = oneapi::tbb::this_task_arena::max_concurrency() ;
+	 int gt = oneapi::tbb::global_control::active_value(tbb::global_control::max_allowed_parallelism) ;
+	logger->information("MQTT_PROCESSOR: NB Available threads : default :%d    Max:%d      thread pool limit:%d", nDefThreads, max, gt);
 	taskMqttEventFunctionNode_t *mqttEventTask;
 
-	mqttEventTask = new taskMqttEventFunctionNode_t(graph, oneapi::tbb::flow::unlimited, taskPhynoRootMsg);
-	oneapi::tbb::flow::make_edge(oneapi::tbb::flow::output_port<0>(*mqttEventTaskSelector), *mqttEventTask);
-	vectorTasks.push_back(mqttEventTask);
+	auto task1 = std::make_unique<taskMqttEventFunctionNode_t>(graph, oneapi::tbb::flow::unlimited, taskPhynoRootMsg);
+	oneapi::tbb::flow::make_edge(oneapi::tbb::flow::output_port<0>(*mqttEventTaskSelector), *task1);
+	vectorTasks.push_back(std::move(task1));
 
-	mqttEventTask = new taskMqttEventFunctionNode_t(graph, oneapi::tbb::flow::unlimited, taskCreateScene);
-	oneapi::tbb::flow::make_edge(oneapi::tbb::flow::output_port<2>(*mqttEventTaskSelector), *mqttEventTask);
-	vectorTasks.push_back(mqttEventTask);
+	auto task2 = std::make_unique<taskMqttEventFunctionNode_t>(graph, oneapi::tbb::flow::unlimited, taskCreateScene);
+	oneapi::tbb::flow::make_edge(oneapi::tbb::flow::output_port<0>(*mqttEventTaskSelector), *task2);
+	vectorTasks.push_back(std::move(task2));
 
-	mqttEventTask = new taskMqttEventFunctionNode_t(graph, oneapi::tbb::flow::unlimited, taskCreateEntity);
-	oneapi::tbb::flow::make_edge(oneapi::tbb::flow::output_port<4>(*mqttEventTaskSelector), *mqttEventTask);
-	vectorTasks.push_back(mqttEventTask);
+	auto task3 = std::make_unique<taskMqttEventFunctionNode_t>(graph, oneapi::tbb::flow::unlimited, taskCreateEntity);
+	oneapi::tbb::flow::make_edge(oneapi::tbb::flow::output_port<0>(*mqttEventTaskSelector), *task3);
+	vectorTasks.push_back(std::move(task3));
+
 }
 
 mqttPreProcessor::~mqttPreProcessor()
 {
+	delete(mqttEventTaskSelector);
 }
 
 void mqttPreProcessor::processMqttEvent(mqttEvent *mqttEvent)
