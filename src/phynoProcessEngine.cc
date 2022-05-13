@@ -112,11 +112,11 @@ mqttPreProcessor::mqttPreProcessor(const std::string &str) : phynoPrefix(str)
 	vectorTasks.push_back(std::move(task1));
 
 	auto task2 = std::make_unique<taskMqttEventFunctionNode_t>(graph, oneapi::tbb::flow::unlimited, taskCreateScene);
-	oneapi::tbb::flow::make_edge(oneapi::tbb::flow::output_port<0>(*mqttEventTaskSelector), *task2);
+	oneapi::tbb::flow::make_edge(oneapi::tbb::flow::output_port<2>(*mqttEventTaskSelector), *task2);
 	vectorTasks.push_back(std::move(task2));
 
 	auto task3 = std::make_unique<taskMqttEventFunctionNode_t>(graph, oneapi::tbb::flow::unlimited, taskCreateEntity);
-	oneapi::tbb::flow::make_edge(oneapi::tbb::flow::output_port<0>(*mqttEventTaskSelector), *task3);
+	oneapi::tbb::flow::make_edge(oneapi::tbb::flow::output_port<4>(*mqttEventTaskSelector), *task3);
 	vectorTasks.push_back(std::move(task3));
 
 }
