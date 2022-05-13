@@ -11,11 +11,12 @@
 
 #include <mqtt_protocol.h>
 
-void onMosquittoLogCallback(struct mosquitto*, void * /*userData*/, int /* level */, const char *str)
+void onMosquittoLogCallback(struct mosquitto*, void * /*userData*/, int level, const char *str)
 {
     /* Pring all log messages regardless of level. */
+    if (level == 16) return;
     Logger &logger = Logger::get("PhynoMainLogger");
-    logger.information("MOSQUITTO_LAYER: %?s", std::string(str));
+    logger.information("MOSQUITTO_LAYER level %d: %?s", level, std::string(str));
 }
 
 void onMqttMessageCallback(struct mosquitto *, void *userData, const struct mosquitto_message *message, const mosquitto_property *)
@@ -76,9 +77,8 @@ void mqtt_subsystem::initialize(Poco::Util::Application &app)
     this->processor = new mqttPreProcessor(mqttPrefix);
     // Read configuration values
     std::string broker_url = app.config().getString("phyno.broker.url", DEFAULT_ADDRESS);
+    int broker_port = app.config().getInt("phyno.broker.url", DEFAULT_PORT);
 
-    const char *host = "localhost";
-    int port = 1883;
     int keepalive = 60;
     bool clean_session = true;
 
@@ -106,7 +106,7 @@ void mqtt_subsystem::initialize(Poco::Util::Application &app)
 
     app.logger().information("MQTT_SUBSYSTEM: Connecting to broker ...");
 
-    if (mosquitto_connect_bind_v5(mosq, host, port, keepalive, NULL, NULL) != MOSQ_ERR_SUCCESS)
+    if (mosquitto_connect_bind_v5(mosq, broker_url.c_str(), broker_port, keepalive, NULL, NULL) != MOSQ_ERR_SUCCESS)
     {
         app.logger().error("MQTT_SUBSYSTEM: FATAL: Failled connecting to broker. Terminating application.");
         // Terminating application

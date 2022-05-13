@@ -10,7 +10,9 @@
 
 using Poco::Util::Subsystem;
 
-#define DEFAULT_ADDRESS "tcp://localhost:1883"
+#define DEFAULT_ADDRESS "localhost"
+#define DEFAULT_PORT 1883
+
 #define CLIENTID "phyno"
 #define DEFAULT_PHYNO_ROOT_TOPIC "/physics/phyno"
 #define QOS 0

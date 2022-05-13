@@ -65,8 +65,8 @@ static std::vector<Edge> edges =
 		// (x, y, w) —> edge from `x` to `y` having weight `w`
 		{0, 1, "scenes"},
 		{1, 2, "$scene_name"},
-		{2, 3, "entities"},
-		{3, 4, "$entity_name"}};
+		{2, 3, "actors"},
+		{3, 4, "$actor_name"}};
 
 static Graph graph(edges, graphSize);
 
@@ -108,7 +108,7 @@ public:
 		return (false);
 	}
 
-	uint8_t findNextNode(uint8_t enteringNode, StringTokenizer::Iterator index, StringTokenizer::Iterator end, std::map<std::string, std::string> &paramParsed)
+	uint16_t findNextNode(uint8_t enteringNode, StringTokenizer::Iterator index, StringTokenizer::Iterator end, std::map<std::string, std::string> &paramParsed)
 	{
 		Poco::Logger *logger;
 		logger = &Logger::get("PhynoMainLogger");
@@ -144,7 +144,7 @@ public:
 			return (findNextNode((*it).first, ++index, end, paramParsed));
 		}
 		else
-			return (enteringNode);
+			return (9999);
 	}
 
 	void operator()(const mqttEventTaskSelectorTupleIn_t &in, taskMqttEventMultiFunctionNode_t::output_ports_type &ports)
@@ -162,10 +162,14 @@ public:
 		uint8_t currentNode = 0;
 		logger->information("Resolving node");
 
-		uint8_t nextNode = findNextNode(currentNode, index, end, event->paramParsed);
+		uint16_t nextNode = findNextNode(currentNode, index, end, event->paramParsed);
 		logger->information("Resolved node %?i", nextNode);
 		switch (nextNode)
 		{
+		case 9999:
+			logger->warning("Topic %?s doesn't match any path.", phynoTopic);
+			break;
+
 		case 0:
 			std::get<0>(ports).try_put(event);
 			break;
@@ -199,7 +203,7 @@ public:
 
 	std::string phynoPrefix;
 
-	std::vector<std::unique_ptr<taskMqttEventFunctionNode_t> > vectorTasks;
+	std::vector<std::unique_ptr<taskMqttEventFunctionNode_t>> vectorTasks;
 
 	// preprocessingMqttEventTask_t createSceneTask;
 	void processMqttEvent(mqttEvent *mqttEvent);

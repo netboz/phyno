@@ -78,19 +78,19 @@ void taskCreateEntity(mqttEvent *e)
 {
 	Poco::Logger *logger = &Logger::get("PhynoMainLogger");
 	std::string scene_name = getParamsKey(e->paramParsed, "scene_name");
-	std::string entity_name = getParamsKey(e->paramParsed, "entity_name");
-	logger->information("MQTT_PROCESSOR: Task create Entity : scene : %?s   Entity: %?s", scene_name, entity_name);
+	std::string actor_name = getParamsKey(e->paramParsed, "actor_name");
+	logger->information("MQTT_PROCESSOR: Task create Entity : scene : %?s   Entity: %?s", scene_name, actor_name);
 	PxScene *mScene = Scenes[scene_name];
 
 	if (mScene == NULL)
 	{
-		logger->error("MQTT_PROCESSOR: Scene : %?s not found while adding rigid dynamic body: %?s", scene_name, entity_name);
+		logger->error("MQTT_PROCESSOR: Scene : %?s not found while adding rigid dynamic body: %?s", scene_name, actor_name);
 		return;
 	}
-	phynoEventAddDynamicRigid *phynoEvent = new phynoEventAddDynamicRigid(scene_name, entity_name);
+	phynoEventAddDynamicRigid *phynoEvent = new phynoEventAddDynamicRigid(scene_name, actor_name);
 
 	phynoEvent->rigidDynamics = createDynamic(PxTransform(PxVec3(0, 100, 0)), PxSphereGeometry(10), PxVec3(0, 0, 0));
-	phynoEvent->rigidDynamics->userData = new std::string(entity_name);
+	phynoEvent->rigidDynamics->userData = new std::string(actor_name);
 	phynoEvent->targetScene=mScene;
 	((phynoScene *)(mScene->userData))->sceneEventQueue.push(phynoEvent);
 	delete (e);
