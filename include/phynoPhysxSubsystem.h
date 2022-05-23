@@ -3,8 +3,8 @@
 #include "Poco/Util/Application.h"
 #include "Poco/Util/Subsystem.h"
 #include "Poco/Logger.h"
-#include "Poco/Timer.h"
 #include "Poco/Thread.h"
+#include "Poco/Timer.h"
 
 #include "PxPhysicsAPI.h"
 #include "PxSimpleFactory.h"

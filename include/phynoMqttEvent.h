@@ -1,10 +1,13 @@
 #pragma once
+#include "mosquitto.h"
+
 
 class mqttEvent
 {
 public:
 	std::string topic;
-	MQTTAsync_message *message;
+	std::string payload;
 	std::map<std::string, std::string> paramParsed;
-	~mqttEvent() { MQTTAsync_freeMessage(&message); };
+	
+	~mqttEvent() { };
 };
