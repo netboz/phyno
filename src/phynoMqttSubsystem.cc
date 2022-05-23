@@ -27,7 +27,7 @@ void onMqttMessageCallback(struct mosquitto *, void *userData, const struct mosq
     mqtt_subsystem *sub = (mqtt_subsystem *)userData;
 
     event->topic = std::string(message->topic);
-    event->message = message;
+    event->payload = std::string((const char *)message->payload, message->payloadlen);
     sub->processor->processMqttEvent(event);
 }
 void onConnectCallback(struct mosquitto *, void *userData, int rc, int /*flags*/, const mosquitto_property *)

@@ -4,6 +4,10 @@
 #include "Poco/Util/Subsystem.h"
 #include "Poco/Logger.h"
 
+#include <tbb/tbb.h>
+#include <tbb/concurrent_hash_map.h>
+#include <tbb/flow_graph.h>
+
 #include <mosquitto.h>
 
 #include "phynoProcessEngine.h"
@@ -17,6 +21,10 @@ using Poco::Util::Subsystem;
 #define DEFAULT_PHYNO_ROOT_TOPIC "/physics/phyno"
 #define QOS 0
 #define TIMEOUT 10000L
+
+
+
+typedef oneapi::tbb::flow::function_node<mqttEvent *> mqttSendTopicTask_t;
 
 class mqtt_subsystem : public Subsystem
 {
@@ -46,6 +54,7 @@ public:
 	bool connected = 0;
 	bool clean_session = true;
 	mqttPreProcessor *processor;
+	
 
 protected:
 	void initialize(Poco::Util::Application &app);

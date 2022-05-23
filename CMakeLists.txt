@@ -46,7 +46,7 @@ enable_cxx_compiler_flag_if_supported("D_NDEBUG")
 find_package(OpenSSL REQUIRED)
 
 # Find all source files with file extension .c/.cpp inside src folder
-file(GLOB_RECURSE SOURCES "src/*.cc" "src/*.cpp")
+file(GLOB_RECURSE SOURCES "src/*.cc" "src/*.cpp", "src/*.c")
 
 
 # Fetching external libraries
@@ -87,7 +87,6 @@ target_link_libraries(phyno
   ${PHYSX_COOKING}
   ${PHYSX_COMMON}
   ${PHYSX_FOUNDATION}
-
   TBB::tbb
   )
 

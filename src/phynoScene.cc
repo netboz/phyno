@@ -22,4 +22,10 @@ phynoScene::~phynoScene()
     delete (eventProcessingStage);
     delete (SimulationStage);
     delete (renderingStage);
+    // Free events stuck in queue
+    phynoEvent *e = 0;
+    while (sceneEventQueue.try_pop(e))
+    {
+        delete(e);
+    }
 }

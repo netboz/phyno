@@ -108,7 +108,7 @@ public:
 		return (false);
 	}
 
-	uint16_t findNextNode(uint8_t enteringNode, StringTokenizer::Iterator index, StringTokenizer::Iterator end, std::map<std::string, std::string> &paramParsed)
+	uint16_t findNextNode(uint16_t enteringNode, StringTokenizer::Iterator index, StringTokenizer::Iterator end, std::map<std::string, std::string> &paramParsed)
 	{
 		Poco::Logger *logger;
 		logger = &Logger::get("PhynoMainLogger");
@@ -159,11 +159,12 @@ public:
 		StringTokenizer tokenizer(phynoTopic, "/", StringTokenizer::TOK_TRIM | StringTokenizer::TOK_IGNORE_EMPTY);
 		StringTokenizer::Iterator index = tokenizer.begin();
 		StringTokenizer::Iterator end = tokenizer.end();
-		uint8_t currentNode = 0;
+		uint16_t currentNode = 0;
 		logger->information("Resolving node");
 
 		uint16_t nextNode = findNextNode(currentNode, index, end, event->paramParsed);
 		logger->information("Resolved node %?i", nextNode);
+		
 		switch (nextNode)
 		{
 		case 9999:
