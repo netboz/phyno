@@ -21,6 +21,7 @@ Phyno (for Physic Node) is a physic simulation engine over MQTT.
 
     - Intel oneTBB : Pls follow standard installation for your system
     - Mosquitto mqtt c library : standard installation
+    - PhysX from : https://github.com/NVIDIAGameWorks/PhysX
 
 ## Build
 
