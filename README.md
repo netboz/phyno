@@ -7,10 +7,10 @@ Phyno (for Physic Node) is a physic simulation engine over MQTT.
 - Create new scene by publishing to : ```/phyno/scenes/<scene_name>``` 
   
 
-- Create Entities by publishing to : ```/phyno/scenes/<scene_name>/entities/<entity_name>```
+- Create Entities by publishing to : ```/phyno/scenes/<scene_name>/actors/<entity_name>```
 
 
-- Read position in real time at : ```/phyno/scenes/<scene_name>/entities/<entity_name>/x```, ```/phyno/scenes/<scene_name>/entities/<entity_name>/y``` etc ...
+- Read position, orientation and related velocities, in real time at : ```/phyno/scenes/<scene_name>/actors/<entity_name>/pos```
 
 ## Features
 
@@ -20,7 +20,7 @@ Phyno (for Physic Node) is a physic simulation engine over MQTT.
 ## Dependencies
 
     - Intel oneTBB : Pls follow standard installation for your system
-    - pahoo-mqtt c library : Build static, will add details shortly
+    - Mosquitto mqtt c library : standard installation
 
 ## Build
 
